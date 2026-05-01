@@ -423,8 +423,6 @@ function renderDropdown(container, key, options, label) {
 
   const search = container.querySelector(".dropdown-search");
   if (search) {
-    search.focus();
-    search.setSelectionRange(search.value.length, search.value.length);
     search.addEventListener("click", (event) => event.stopPropagation());
     search.addEventListener("input", (event) => {
       event.stopPropagation();
