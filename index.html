@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EDC Las Vegas 2026 Set Times</title>
+    <style>
+      :root {
+        --bg: #f8fafc;
+        --sheet: #ffffff;
+        --grid: #d7dee8;
+        --grid-dark: #aeb8c6;
+        --header: #eef3f8;
+        --text: #111827;
+        --muted: #5f6b7a;
+        --blue: #2563eb;
+        --blue-soft: #dbeafe;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        color: var(--text);
+        background: var(--bg);
+      }
+
+      .page {
+        min-height: 100vh;
+        padding: 18px;
+      }
+
+      .sheet-shell {
+        max-width: 1280px;
+        margin: 0 auto;
+        border: 1px solid var(--grid-dark);
+        background: var(--sheet);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+      }
+
+      .sheet-title {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 18px 14px;
+        border-bottom: 1px solid var(--grid);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1.65rem;
+        line-height: 1.2;
+        font-weight: 700;
+      }
+
+      .summary {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .set-count {
+        padding: 7px 10px;
+        border: 1px solid var(--grid);
+        background: var(--blue-soft);
+        color: #1e3a8a;
+        font-size: 0.88rem;
+        white-space: nowrap;
+      }
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) 170px 210px 210px auto;
+        gap: 8px;
+        padding: 10px 18px;
+        border-bottom: 1px solid var(--grid);
+        background: #fbfdff;
+      }
+
+      input,
+      button {
+        min-height: 36px;
+        border: 1px solid var(--grid-dark);
+        border-radius: 2px;
+        background: #fff;
+        color: var(--text);
+        font: inherit;
+        font-size: 0.92rem;
+      }
+
+      input,
+      .dropdown-button {
+        width: 100%;
+        padding: 7px 9px;
+      }
+
+      button {
+        padding: 0 13px;
+        cursor: pointer;
+      }
+
+      input:focus,
+      button:focus {
+        outline: 2px solid rgba(37, 99, 235, 0.24);
+        border-color: var(--blue);
+      }
+
+      .searchable-dropdown {
+        position: relative;
+      }
+
+      .dropdown-button {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        text-align: left;
+      }
+
+      .dropdown-button.is-active {
+        border-color: var(--blue);
+        background: #f8fbff;
+      }
+
+      .dropdown-caret {
+        color: var(--muted);
+      }
+
+      .dropdown-panel {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        z-index: 10;
+        padding: 8px;
+        border: 1px solid var(--grid-dark);
+        background: #fff;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.16);
+      }
+
+      .dropdown-search {
+        margin-bottom: 7px;
+      }
+
+      .dropdown-options {
+        display: grid;
+        gap: 2px;
+        max-height: 220px;
+        overflow: auto;
+      }
+
+      .dropdown-option {
+        min-height: 30px;
+        padding: 5px 7px;
+        border: 0;
+        background: #fff;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .dropdown-option input {
+        width: 14px;
+        min-height: 14px;
+        height: 14px;
+        margin: 0;
+        flex: 0 0 auto;
+      }
+
+      .dropdown-option:hover,
+      .dropdown-option.is-selected {
+        background: #eaf2ff;
+      }
+
+      .dropdown-empty {
+        padding: 8px;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .time-filter {
+        position: relative;
+      }
+
+      .time-panel {
+        position: absolute;
+        top: calc(100% + 4px);
+        right: 0;
+        z-index: 12;
+        width: min(420px, calc(100vw - 36px));
+        padding: 22px 26px 18px;
+        border: 1px solid var(--grid-dark);
+        background: #fff;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.2);
+      }
+
+      .time-panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 28px;
+      }
+
+      .time-panel h2 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .time-close {
+        min-height: 30px;
+        width: 30px;
+        padding: 0;
+        border: 0;
+        font-size: 1.5rem;
+        line-height: 1;
+      }
+
+      .time-subtitle {
+        margin: 0 0 12px;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .time-input-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      .time-input-row label {
+        display: grid;
+        gap: 5px;
+      }
+
+      .time-input-row span {
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+
+      .range-control {
+        position: relative;
+        height: 36px;
+        margin-bottom: 18px;
+      }
+
+      .range-track,
+      .range-fill {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 16px;
+        height: 5px;
+        border-radius: 999px;
+      }
+
+      .range-track {
+        background: #d7dee8;
+      }
+
+      .range-fill {
+        background: var(--blue);
+      }
+
+      .range-input {
+        position: absolute;
+        left: 0;
+        top: 4px;
+        width: 100%;
+        min-height: 28px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        pointer-events: none;
+        appearance: none;
+      }
+
+      .range-input::-webkit-slider-thumb {
+        width: 22px;
+        height: 22px;
+        border: 0;
+        border-radius: 50%;
+        background: var(--blue);
+        cursor: pointer;
+        pointer-events: auto;
+        appearance: none;
+      }
+
+      .range-input::-moz-range-thumb {
+        width: 22px;
+        height: 22px;
+        border: 0;
+        border-radius: 50%;
+        background: var(--blue);
+        cursor: pointer;
+        pointer-events: auto;
+      }
+
+      .time-actions {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .time-reset {
+        min-height: 32px;
+        color: var(--blue);
+        border-color: transparent;
+      }
+
+      .table-wrap {
+        max-height: calc(100vh - 170px);
+        overflow: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        font-size: 0.92rem;
+      }
+
+      thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: var(--header);
+        color: #243044;
+        font-weight: 700;
+        text-align: left;
+        border-bottom: 1px solid var(--grid-dark);
+      }
+
+      th,
+      td {
+        padding: 7px 9px;
+        border-right: 1px solid var(--grid);
+        border-bottom: 1px solid var(--grid);
+        vertical-align: top;
+      }
+
+      th:last-child,
+      td:last-child {
+        border-right: 0;
+      }
+
+      tbody tr:nth-child(even) td {
+        background: #f3f6fa;
+      }
+
+      tbody tr:nth-child(odd) td {
+        background: #ffffff;
+      }
+
+      tbody tr:hover td {
+        background: #eff6ff;
+      }
+
+      .col-day {
+        width: 110px;
+      }
+
+      .col-time {
+        width: 110px;
+      }
+
+      .col-stage {
+        width: 190px;
+      }
+
+      .col-artist {
+        width: 40%;
+      }
+
+      .col-genre {
+        width: 160px;
+      }
+
+      .day-cell {
+        color: #123772;
+        font-weight: 700;
+      }
+
+      .time-cell {
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+      }
+
+      .artist-cell {
+        font-weight: 600;
+      }
+
+      .empty-row {
+        padding: 28px;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      @media (max-width: 760px) {
+        .page {
+          padding: 10px;
+        }
+
+        .sheet-title {
+          align-items: start;
+          flex-direction: column;
+        }
+
+        .toolbar {
+          grid-template-columns: 1fr;
+        }
+
+        .table-wrap {
+          max-height: none;
+        }
+
+        table {
+          min-width: 760px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="sheet-shell">
+        <header class="sheet-title">
+          <div>
+            <h1>EDC Las Vegas 2026 Set Times</h1>
+            <p class="summary" id="results-summary"></p>
+          </div>
+          <div class="set-count"><strong id="set-total">245</strong> total sets</div>
+        </header>
+
+        <div class="toolbar" aria-label="Schedule filters">
+          <input
+            id="search-input"
+            type="search"
+            placeholder="Search artist, time, stage, or day"
+            autocomplete="off"
+          />
+          <div class="searchable-dropdown" id="day-dropdown"></div>
+          <div class="searchable-dropdown" id="stage-dropdown"></div>
+          <div class="time-filter" id="time-dropdown"></div>
+          <button id="clear-filters" type="button">Clear</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-day">Day</th>
+                <th class="col-time">Start Time</th>
+                <th class="col-stage">Stage</th>
+                <th class="col-artist">Artist</th>
+                <th class="col-genre">Genre</th>
+              </tr>
+            </thead>
+            <tbody id="schedule-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="./lineup-data.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
