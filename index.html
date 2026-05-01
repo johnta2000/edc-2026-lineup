@@ -400,8 +400,7 @@
         }
 
         input,
-        button,
-        table {
+        button {
           font-size: 16px;
         }
 
@@ -416,10 +415,46 @@
 
         .table-wrap {
           max-height: none;
+          overflow: visible;
         }
 
         table {
-          min-width: 760px;
+          min-width: 0;
+          table-layout: fixed;
+          font-size: 11px;
+          line-height: 1.22;
+        }
+
+        thead th {
+          top: 0;
+          z-index: 5;
+        }
+
+        th,
+        td {
+          padding: 5px 4px;
+          overflow-wrap: anywhere;
+          word-break: normal;
+        }
+
+        .col-day {
+          width: 14%;
+        }
+
+        .col-time {
+          width: 18%;
+        }
+
+        .col-stage {
+          width: 24%;
+        }
+
+        .col-artist {
+          width: 29%;
+        }
+
+        .col-genre {
+          width: 15%;
         }
       }
     </style>
