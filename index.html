@@ -52,24 +52,16 @@
 
       h1 {
         margin: 0;
-        font-size: 1.65rem;
+        font-size: clamp(1.05rem, 4.8vw, 1.65rem);
         line-height: 1.2;
         font-weight: 700;
+        white-space: nowrap;
       }
 
       .summary {
         margin: 5px 0 0;
         color: var(--muted);
         font-size: 0.92rem;
-      }
-
-      .set-count {
-        padding: 7px 10px;
-        border: 1px solid var(--grid);
-        background: var(--blue-soft);
-        color: #1e3a8a;
-        font-size: 0.88rem;
-        white-space: nowrap;
       }
 
       .toolbar {
@@ -434,7 +426,6 @@
             <h1>EDC Las Vegas 2026 Set Times</h1>
             <p class="summary" id="results-summary"></p>
           </div>
-          <div class="set-count"><strong id="set-total">245</strong> total sets</div>
         </header>
 
         <div class="toolbar" aria-label="Schedule filters">

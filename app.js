@@ -7,7 +7,6 @@ const timeDropdown = document.querySelector("#time-dropdown");
 const clearButton = document.querySelector("#clear-filters");
 const resultsSummary = document.querySelector("#results-summary");
 const scheduleBody = document.querySelector("#schedule-body");
-const setTotal = document.querySelector("#set-total");
 
 const dropdownState = {
   day: { values: [], search: "", open: false },
@@ -845,7 +844,6 @@ function renderTable(filteredSets) {
 function renderResults() {
   const filteredSets = getFilteredSets();
 
-  setTotal.textContent = sets.length;
   resultsSummary.textContent = `${filteredSets.length} of ${sets.length} sets shown`;
   renderTable(filteredSets);
   syncUrlState();
