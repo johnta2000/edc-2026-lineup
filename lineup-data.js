@@ -2259,3 +2259,5 @@ if (typeof window !== "undefined") {
 if (typeof module !== "undefined") {
   module.exports = EDC_LINEUP_DATA;
 }
+
+export default EDC_LINEUP_DATA;

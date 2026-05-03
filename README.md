@@ -1,13 +1,21 @@
 # EDC Las Vegas 2026 Set Times
 
-Static spreadsheet-style schedule for EDC Las Vegas 2026 set times.
+React schedule browser for EDC Las Vegas 2026 set times.
 
 ## Files
 
-- `index.html` - page markup and styles
-- `app.js` - filters, table rendering, and genre labels
+- `index.html` - Vite entry point
+- `src/main.jsx` - React filters, table rendering, share URLs, and genre labels
+- `src/styles.css` - app styling
 - `lineup-data.js` - schedule data
+
+## Develop
+
+```sh
+npm install
+npm run dev
+```
 
 ## Deploy
 
-This project is plain static HTML, CSS, and JavaScript. It can be hosted on GitHub Pages, Vercel, Netlify, or any basic web host.
+Build with `npm run build`, then host the generated `dist` directory on GitHub Pages, Vercel, Netlify, or any basic web host.
