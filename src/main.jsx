@@ -372,6 +372,68 @@ const dayLabels = {
   Sunday: "Sun",
 };
 
+const dayDates = {
+  Friday: "May 15",
+  Saturday: "May 16",
+  Sunday: "May 17",
+};
+
+const wallpaperStageOrder = [
+  "Kinetic Field",
+  "Circuit Grounds",
+  "Cosmic Meadow",
+  "Neon Garden",
+  "Basspod",
+  "Wasteland",
+  "Quantum Valley",
+  "Bionic Jungle",
+  "Stereo Bloom",
+];
+
+const wallpaperThemes = {
+  Friday: {
+    accent: "#ff2bd6",
+    accentDark: "#1aa7ff",
+    accentSoft: "#7cf8ff",
+    glow: "#0d46c8",
+    secondaryGlow: "#451067",
+    dayFill: "#ffffff",
+  },
+  Saturday: {
+    accent: "#24e4ff",
+    accentDark: "#ff2bd6",
+    accentSoft: "#fff06a",
+    glow: "#0830a8",
+    secondaryGlow: "#5b0f73",
+    dayFill: "#e9fbff",
+  },
+  Sunday: {
+    accent: "#fff34f",
+    accentDark: "#ff2f90",
+    accentSoft: "#7cf8ff",
+    glow: "#1237b5",
+    secondaryGlow: "#5c0d68",
+    dayFill: "#fff6bd",
+  },
+};
+
+const wallpaperStagePalette = [
+  { start: "#13c9ff", end: "#ff2bd6", label: "#05040c" },
+  { start: "#ff2bd6", end: "#fff34f", label: "#06040a" },
+  { start: "#7cf8ff", end: "#1f7dff", label: "#05040c" },
+  { start: "#ff7a18", end: "#ff2bd6", label: "#07030a" },
+  { start: "#a8ff3e", end: "#24e4ff", label: "#041014" },
+  { start: "#fff34f", end: "#ff7a18", label: "#08050a" },
+  { start: "#875cff", end: "#24e4ff", label: "#05040c" },
+  { start: "#ff2f90", end: "#875cff", label: "#06040a" },
+  { start: "#24e4ff", end: "#fff34f", label: "#05040c" },
+];
+
+const wallpaperSize = {
+  width: 1290,
+  height: 2796,
+};
+
 const columnConfig = [
   { key: "day", label: "Day", className: "col-day", defaultWidth: 112, minWidth: 72 },
   { key: "time", label: "Start Time", className: "col-time", defaultWidth: 118, minWidth: 88 },
@@ -486,6 +548,187 @@ function copyTextToClipboard(value) {
   return Promise.resolve();
 }
 
+function escapeXml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function getApproxTextWidth(value, fontSize) {
+  return value.length * fontSize * 0.56;
+}
+
+function truncateSvgText(value, fontSize, maxWidth) {
+  if (getApproxTextWidth(value, fontSize) <= maxWidth) {
+    return value;
+  }
+
+  const ellipsis = "...";
+  const maxCharacters = Math.max(
+    4,
+    Math.floor((maxWidth - getApproxTextWidth(ellipsis, fontSize)) / (fontSize * 0.56))
+  );
+
+  return `${value.slice(0, maxCharacters).trimEnd()}${ellipsis}`;
+}
+
+function makeWallpaperSvg(day) {
+  const theme = wallpaperThemes[day] ?? wallpaperThemes.Friday;
+  const daySets = sets.filter((set) => set.day === day);
+  const setsByStage = new Map(
+    wallpaperStageOrder.map((stage) => [
+      stage,
+      daySets
+        .filter((set) => set.stage === stage)
+        .sort((left, right) => left.timeMinutes - right.timeMinutes),
+    ])
+  );
+  const { width, height } = wallpaperSize;
+  const pagePad = 42;
+  const safeZoneBottom = Math.round(height * 0.25);
+  const titleTop = safeZoneBottom + 54;
+  const gridTop = safeZoneBottom + 178;
+  const gridBottom = height - 28;
+  const gridGap = 14;
+  const cardWidth = (width - pagePad * 2 - gridGap * 2) / 3;
+  const cardHeight = (gridBottom - gridTop - gridGap * 2) / 3;
+  const stageHeaderHeight = 48;
+  const rows = wallpaperStageOrder
+    .map((stage, index) => {
+      const stageTheme = wallpaperStagePalette[index % wallpaperStagePalette.length];
+      const col = index % 3;
+      const row = Math.floor(index / 3);
+      const x = pagePad + col * (cardWidth + gridGap);
+      const y = gridTop + row * (cardHeight + gridGap);
+      const stageSets = setsByStage.get(stage) ?? [];
+      const contentTop = y + stageHeaderHeight + 42;
+      const availableHeight = cardHeight - stageHeaderHeight - 66;
+      const rowStep = Math.min(52, availableHeight / Math.max(stageSets.length, 1));
+      const timeFontSize = stageSets.length > 10 ? 21 : 22;
+      const artistBaseSize = stageSets.length > 10 ? 28 : 30;
+      const artistX = x + 98;
+      const artistMaxWidth = cardWidth - 120;
+      const textRows = stageSets
+        .map((set, setIndex) => {
+          const yPos = contentTop + setIndex * rowStep;
+          const artist = truncateSvgText(set.artist, artistBaseSize, artistMaxWidth);
+
+          return `
+            <line x1="${x + 16}" x2="${x + cardWidth - 16}" y1="${yPos + 17}" y2="${yPos + 17}" stroke="#7cf8ff" stroke-opacity="0.08"/>
+            <text x="${x + 16}" y="${yPos}" fill="${stageTheme.end}" font-size="${timeFontSize}" font-weight="800" font-family="Arial Narrow, Arial, sans-serif">${escapeXml(set.displayTime.replace(" ", ""))}</text>
+            <text x="${artistX}" y="${yPos}" fill="#ffffff" font-size="${artistBaseSize}" font-weight="800" font-family="Arial Narrow, Arial, sans-serif">${escapeXml(artist)}</text>
+          `;
+        })
+        .join("");
+
+      return `
+        <g>
+          <rect x="${x}" y="${y}" width="${cardWidth}" height="${cardHeight}" rx="7" fill="url(#cardGradient)" stroke="${stageTheme.start}" stroke-opacity="0.72"/>
+          <rect x="${x}" y="${y}" width="${cardWidth}" height="${stageHeaderHeight}" rx="7" fill="url(#stageGradient${index})"/>
+          <rect x="${x}" y="${y + stageHeaderHeight - 7}" width="${cardWidth}" height="7" fill="${stageTheme.end}"/>
+          <text x="${x + 16}" y="${y + 33}" fill="${stageTheme.label}" font-size="22" font-weight="900" letter-spacing="2.1" font-family="Arial Black, Impact, Arial, sans-serif">${escapeXml(stage.toUpperCase())}</text>
+          ${textRows}
+        </g>
+      `;
+    })
+    .join("");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <defs>
+        <radialGradient id="bgGlow" cx="50%" cy="21%" r="72%">
+          <stop offset="0%" stop-color="${theme.glow}"/>
+          <stop offset="48%" stop-color="${theme.secondaryGlow}"/>
+          <stop offset="100%" stop-color="#05040c"/>
+        </radialGradient>
+        <linearGradient id="stageGradient" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0%" stop-color="${theme.accentDark}"/>
+          <stop offset="100%" stop-color="${theme.accent}"/>
+        </linearGradient>
+        ${wallpaperStagePalette
+          .map(
+            (stageTheme, index) => `
+        <linearGradient id="stageGradient${index}" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0%" stop-color="${stageTheme.start}"/>
+          <stop offset="100%" stop-color="${stageTheme.end}"/>
+        </linearGradient>`
+          )
+          .join("")}
+        <linearGradient id="cardGradient" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stop-color="#050b28" stop-opacity="0.96"/>
+          <stop offset="48%" stop-color="#090724" stop-opacity="0.91"/>
+          <stop offset="100%" stop-color="#03030b" stop-opacity="0.98"/>
+        </linearGradient>
+        <pattern id="edcRays" width="86" height="86" patternUnits="userSpaceOnUse">
+          <path d="M0 43 H86 M43 0 V86" stroke="#24e4ff" stroke-opacity="0.08" stroke-width="2"/>
+        </pattern>
+        <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="34"/>
+        </filter>
+      </defs>
+
+      <rect width="${width}" height="${height}" fill="url(#bgGlow)"/>
+      <rect width="${width}" height="${height}" fill="url(#edcRays)" opacity="0.45"/>
+      <circle cx="645" cy="300" r="560" fill="#24e4ff" opacity="0.14" filter="url(#softGlow)"/>
+      <circle cx="1065" cy="1210" r="430" fill="#ff2bd6" opacity="0.18" filter="url(#softGlow)"/>
+      <circle cx="205" cy="2190" r="380" fill="#fff34f" opacity="0.1" filter="url(#softGlow)"/>
+      <path d="M-120 672 C238 420 1052 420 1410 672" fill="none" stroke="#24e4ff" stroke-width="12" stroke-opacity="0.42"/>
+      <path d="M-100 712 C246 492 1044 492 1390 712" fill="none" stroke="#ff2bd6" stroke-width="7" stroke-opacity="0.48"/>
+      <path d="M-80 752 C254 564 1036 564 1370 752" fill="none" stroke="#fff34f" stroke-width="4" stroke-opacity="0.34"/>
+      <g opacity="0.8">
+        <circle cx="104" cy="628" r="16" fill="#fff34f"/>
+        <circle cx="140" cy="650" r="12" fill="#ff2bd6"/>
+        <circle cx="1116" cy="626" r="18" fill="#24e4ff"/>
+        <circle cx="1160" cy="654" r="12" fill="#fff34f"/>
+      </g>
+
+      <text x="${pagePad}" y="92" fill="${theme.accentSoft}" font-size="22" font-weight="900" letter-spacing="3" font-family="Arial Narrow, Arial, sans-serif">${escapeXml(dayDates[day])}</text>
+      <text x="${pagePad}" y="${titleTop}" fill="${theme.accentSoft}" font-size="18" font-weight="900" letter-spacing="5" font-family="Arial Black, Impact, Arial, sans-serif">EDC LAS VEGAS 2026</text>
+      <text x="${pagePad}" y="${titleTop + 72}" fill="${theme.dayFill}" font-size="78" font-weight="900" letter-spacing="0" font-family="Arial Black, Impact, Arial, sans-serif">${escapeXml(day.toUpperCase())}</text>
+      <line x1="${pagePad}" x2="${width - pagePad}" y1="${gridTop - 32}" y2="${gridTop - 32}" stroke="#24e4ff" stroke-opacity="0.52"/>
+
+      ${rows}
+
+    </svg>`;
+}
+
+function makeWallpaperDataUrl(day) {
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(makeWallpaperSvg(day))}`;
+}
+
+function downloadDayWallpaper(day) {
+  const image = new Image();
+  const url = makeWallpaperDataUrl(day);
+
+  image.onload = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = wallpaperSize.width;
+    canvas.height = wallpaperSize.height;
+
+    const context = canvas.getContext("2d");
+    context.drawImage(image, 0, 0);
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        return;
+      }
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `edc-las-vegas-2026-${day.toLowerCase()}-phone-wallpaper.png`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(downloadUrl);
+    }, "image/png");
+  };
+
+  image.src = url;
+}
+
 function summarizeMultiSelect(values, label) {
   if (!values.length) {
     return `All ${label}`;
@@ -502,6 +745,7 @@ function App() {
   const [filters, setFilters] = useState(readFiltersFromUrl);
   const [openFilter, setOpenFilter] = useState("");
   const [shareStatus, setShareStatus] = useState("idle");
+  const [wallpaperOpen, setWallpaperOpen] = useState(false);
   const toolbarRef = useRef(null);
 
   const updateFilters = (patch) => {
@@ -697,7 +941,83 @@ function App() {
 
         <ScheduleTable sets={filteredSets} />
       </section>
+      <button className="wallpaper-launcher" type="button" onClick={() => setWallpaperOpen(true)}>
+        Wallpapers
+      </button>
+      {wallpaperOpen ? <WallpaperDownloads onClose={() => setWallpaperOpen(false)} /> : null}
     </main>
+  );
+}
+
+function WallpaperDownloads({ onClose }) {
+  const previewUrls = useMemo(
+    () => Object.fromEntries(dayOrder.map((day) => [day, makeWallpaperDataUrl(day)])),
+    []
+  );
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="wallpaper-modal-backdrop"
+      role="presentation"
+      onPointerDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <section
+        className="wallpaper-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="wallpaper-title"
+      >
+        <div className="wallpaper-section-head">
+          <div>
+            <h2 id="wallpaper-title">Schedule Wallpapers</h2>
+            <p>Lock screen PNGs of the full schedule</p>
+          </div>
+          <button className="wallpaper-close" type="button" aria-label="Close wallpapers" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div className="wallpaper-grid">
+          {dayOrder.map((day) => (
+            <article className={`wallpaper-card wallpaper-${day.toLowerCase()}`} key={day}>
+              <div className="wallpaper-preview-wrap">
+                <img
+                  className="wallpaper-preview"
+                  src={previewUrls[day]}
+                  width={wallpaperSize.width}
+                  height={wallpaperSize.height}
+                  alt={`${day} EDC Las Vegas 2026 phone wallpaper preview`}
+                  loading="lazy"
+                />
+              </div>
+              <div className="wallpaper-card-footer">
+                <div>
+                  <h3>{day}</h3>
+                  <span>All stages</span>
+                </div>
+                <button type="button" onClick={() => downloadDayWallpaper(day)}>
+                  Download
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }
 

@@ -59,6 +59,173 @@ body {
     var(--sheet);
 }
 
+.wallpaper-launcher {
+  position: fixed;
+  right: max(18px, env(safe-area-inset-right));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 38;
+  min-height: 44px;
+  border-color: #24e4ff;
+  background:
+    linear-gradient(90deg, #13c9ff, #ff2bd6 58%, #fff34f),
+    #111827;
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+  font-weight: 900;
+  box-shadow:
+    0 0 20px rgba(36, 228, 255, 0.42),
+    0 14px 34px rgba(15, 23, 42, 0.26);
+}
+
+.wallpaper-launcher:hover {
+  filter: saturate(1.18) brightness(1.05);
+}
+
+.wallpaper-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(3, 4, 18, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.wallpaper-modal {
+  width: min(1040px, 100%);
+  max-height: min(820px, calc(100vh - 44px));
+  overflow: auto;
+  padding: 20px 22px 24px;
+  border: 1px solid rgba(36, 228, 255, 0.48);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(36, 228, 255, 0.2), transparent 34%),
+    radial-gradient(circle at 86% 14%, rgba(255, 43, 214, 0.2), transparent 38%),
+    linear-gradient(180deg, #080b2a, #05040c);
+  color: #fff;
+  box-shadow:
+    0 0 38px rgba(36, 228, 255, 0.24),
+    0 24px 70px rgba(15, 23, 42, 0.48);
+}
+
+.wallpaper-section-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.wallpaper-modal h2,
+.wallpaper-modal h3,
+.wallpaper-modal h4,
+.wallpaper-modal p {
+  margin: 0;
+}
+
+.wallpaper-modal h2 {
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.wallpaper-modal p {
+  margin-top: 4px;
+  color: #7cf8ff;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.wallpaper-close {
+  flex: 0 0 auto;
+  width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: rgba(124, 248, 255, 0.14);
+  color: #fff;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.wallpaper-close:hover {
+  background: rgba(255, 43, 214, 0.22);
+}
+
+.wallpaper-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.wallpaper-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(36, 228, 255, 0.34);
+  border-radius: 8px;
+  background: #07071a;
+  box-shadow:
+    0 0 20px rgba(255, 43, 214, 0.12),
+    0 10px 26px rgba(0, 0, 0, 0.26);
+}
+
+.wallpaper-preview-wrap {
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  background:
+    linear-gradient(180deg, rgba(36, 228, 255, 0.12), rgba(255, 43, 214, 0.1)),
+    #05040c;
+}
+
+.wallpaper-preview {
+  display: block;
+  width: min(100%, 174px);
+  height: auto;
+  aspect-ratio: 1290 / 2796;
+  border-radius: 8px;
+  background: #05040c;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.24);
+}
+
+.wallpaper-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 14px;
+}
+
+.wallpaper-card-footer h3 {
+  font-size: 1rem;
+  line-height: 1.1;
+}
+
+.wallpaper-card-footer span {
+  display: block;
+  margin-top: 3px;
+  color: #9befff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.wallpaper-card-footer button {
+  flex: 0 0 auto;
+  min-height: 34px;
+  border-color: #24e4ff;
+  background: #05040c;
+  color: #fff;
+  font-size: 0.84rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.wallpaper-card-footer button:hover {
+  border-color: #fff34f;
+  background: #101347;
+}
+
 h1 {
   margin: 0;
   font-size: clamp(1.35rem, 4vw, 2.15rem);
@@ -700,6 +867,72 @@ td:has(.genre-badge) {
 
   h1 {
     white-space: normal;
+  }
+
+  .wallpaper-launcher {
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    min-height: 40px;
+  }
+
+  .wallpaper-modal-backdrop {
+    align-items: end;
+    padding: 10px;
+  }
+
+  .wallpaper-modal {
+    width: 100%;
+    max-height: calc(100vh - 20px);
+    padding: 14px 12px 16px;
+  }
+
+  .wallpaper-section-head {
+    align-items: start;
+    margin-bottom: 10px;
+  }
+
+  .wallpaper-modal h2 {
+    font-size: 1rem;
+  }
+
+  .wallpaper-modal p {
+    font-size: 0.78rem;
+  }
+
+  .wallpaper-grid {
+    display: flex;
+    gap: 10px;
+    margin: 0 -12px;
+    padding: 0 12px 2px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+
+  .wallpaper-card {
+    flex: 0 0 min(78vw, 270px);
+    scroll-snap-align: start;
+  }
+
+  .wallpaper-preview-wrap {
+    padding: 12px;
+  }
+
+  .wallpaper-preview {
+    width: min(100%, 152px);
+  }
+
+  .wallpaper-card-footer {
+    padding: 11px 12px;
+  }
+
+  .wallpaper-card-footer h3 {
+    font-size: 0.94rem;
+  }
+
+  .wallpaper-card-footer button {
+    min-height: 32px;
+    padding: 0 9px;
+    font-size: 12px;
   }
 
   .toolbar {
