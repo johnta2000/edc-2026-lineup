@@ -4,6 +4,7 @@ import lineupData from "../lineup-data.js";
 import "./styles.css";
 
 const { dayOrder, stageOrder, schedule } = lineupData;
+const FALLBACK_SET_DURATION_MINUTES = 60;
 
 const GENRE_BY_ARTIST = {
   "1991": "DNB",
@@ -331,14 +332,97 @@ function getGenre(set) {
   return stageFallbacks[set.stage] ?? "Other";
 }
 
-const sets = schedule
-  .map((set) => ({
+function getSetId(set) {
+  return `${set.day}|${set.stage}|${set.time}|${set.artist}`;
+}
+
+function addInferredEndTimes(baseSets) {
+  const setsByDayAndStage = new Map();
+
+  baseSets.forEach((set) => {
+    const key = `${set.day}|${set.stage}`;
+    setsByDayAndStage.set(key, [...(setsByDayAndStage.get(key) ?? []), set]);
+  });
+
+  const endTimesById = new Map();
+
+  setsByDayAndStage.forEach((stageSets) => {
+    [...stageSets]
+      .sort((left, right) => left.timeMinutes - right.timeMinutes)
+      .forEach((set, index, sortedSets) => {
+        const nextSet = sortedSets[index + 1];
+        const inferredEnd = nextSet?.timeMinutes ?? set.timeMinutes + FALLBACK_SET_DURATION_MINUTES;
+
+        endTimesById.set(getSetId(set), Math.max(set.timeMinutes + 15, inferredEnd));
+      });
+  });
+
+  return baseSets.map((set) => {
+    const id = getSetId(set);
+    const endTimeMinutes =
+      endTimesById.get(id) ?? set.timeMinutes + FALLBACK_SET_DURATION_MINUTES;
+
+    return {
+      ...set,
+      id,
+      endTimeMinutes,
+      endDisplayTime: timeFromMinutes(endTimeMinutes),
+      displayRange: `${set.displayTime} - ${timeFromMinutes(endTimeMinutes)}`,
+      durationMinutes: endTimeMinutes - set.timeMinutes,
+    };
+  });
+}
+
+function getOverlapMinutes(left, right) {
+  if (left.id === right.id || left.day !== right.day || left.stage === right.stage) {
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    Math.min(left.endTimeMinutes, right.endTimeMinutes) -
+      Math.max(left.timeMinutes, right.timeMinutes)
+  );
+}
+
+function getConflictDetails(set, comparisonSets = sets) {
+  return comparisonSets
+    .map((candidate) => ({
+      set: candidate,
+      overlapMinutes: getOverlapMinutes(set, candidate),
+    }))
+    .filter((conflict) => conflict.overlapMinutes > 0)
+    .sort(
+      (left, right) =>
+        left.set.timeMinutes - right.set.timeMinutes ||
+        right.overlapMinutes - left.overlapMinutes ||
+        stageOrder.indexOf(left.set.stage) - stageOrder.indexOf(right.set.stage) ||
+        left.set.artist.localeCompare(right.set.artist, undefined, { sensitivity: "base" })
+    );
+}
+
+const sets = addInferredEndTimes(
+  schedule.map((set) => ({
     ...set,
     genre: getGenre(set),
     displayTime: formatTime(set.time),
     timeMinutes: getTimeMinutes(set.time),
   }))
-  .sort(compareSets);
+).sort(compareSets);
+
+const conflictIndex = new Map(sets.map((set) => [set.id, getConflictDetails(set)]));
+
+const conflictCountById = new Map(
+  sets.map((set) => [set.id, conflictIndex.get(set.id)?.length ?? 0])
+);
+
+const setsWithConflicts = sets.filter((set) => (conflictCountById.get(set.id) ?? 0) > 0).length;
+
+const setsWithoutConflicts = sets.length - setsWithConflicts;
+
+const scheduleCoverageSummary = `${setsWithConflicts} sets with conflicts, ${setsWithoutConflicts} clear`;
+
+const setsById = new Map(sets.map((set) => [set.id, set]));
 
 const genreOrder = [...new Set(sets.map((set) => set.genre))].sort((left, right) =>
   left.localeCompare(right, undefined, { sensitivity: "base" })
@@ -440,6 +524,7 @@ const columnConfig = [
   { key: "stage", label: "Stage", className: "col-stage", defaultWidth: 200, minWidth: 120 },
   { key: "artist", label: "Artist", className: "col-artist", defaultWidth: 420, minWidth: 180 },
   { key: "genre", label: "Genre", className: "col-genre", defaultWidth: 154, minWidth: 94 },
+  { key: "conflicts", label: "Conflicts", className: "col-conflicts", defaultWidth: 156, minWidth: 110 },
 ];
 
 function isFullTimeRange(filters) {
@@ -746,6 +831,7 @@ function App() {
   const [openFilter, setOpenFilter] = useState("");
   const [shareStatus, setShareStatus] = useState("idle");
   const [wallpaperOpen, setWallpaperOpen] = useState(false);
+  const [selectedConflictSetId, setSelectedConflictSetId] = useState("");
   const toolbarRef = useRef(null);
 
   const updateFilters = (patch) => {
@@ -810,6 +896,17 @@ function App() {
       return matchesDay && matchesStage && matchesGenre && matchesTime && matchesSearch;
     });
   }, [filters]);
+
+  const selectedConflictSet = selectedConflictSetId
+    ? setsById.get(selectedConflictSetId)
+    : null;
+  const selectedConflictIsVisible =
+    selectedConflictSet && filteredSets.some((set) => set.id === selectedConflictSet.id);
+  const comparisonSet = selectedConflictIsVisible ? selectedConflictSet : null;
+  const comparisonConflicts = comparisonSet ? conflictIndex.get(comparisonSet.id) ?? [] : [];
+  const compareSet = (setId) => {
+    setSelectedConflictSetId((currentSetId) => (currentSetId === setId ? "" : setId));
+  };
   const shareUrl = buildStateUrl(filters);
   const hasSharedViewParams = shareUrl.includes("?");
 
@@ -844,7 +941,7 @@ function App() {
           <div>
             <h1>EDC Las Vegas 2026 Set Times</h1>
             <p className="summary">
-              {filteredSets.length} of {sets.length} sets shown
+              {filteredSets.length} of {sets.length} sets shown · {scheduleCoverageSummary}
             </p>
           </div>
         </header>
@@ -939,7 +1036,20 @@ function App() {
           </div>
         </section>
 
-        <ScheduleTable sets={filteredSets} />
+        {comparisonSet ? (
+          <ConflictComparison
+            set={comparisonSet}
+            conflicts={comparisonConflicts}
+            onClose={() => setSelectedConflictSetId("")}
+          />
+        ) : null}
+
+        <ScheduleTable
+          sets={filteredSets}
+          comparisonSetId={comparisonSet?.id ?? ""}
+          conflictIndex={conflictIndex}
+          onCompareSet={compareSet}
+        />
       </section>
       <button className="wallpaper-launcher" type="button" onClick={() => setWallpaperOpen(true)}>
         Wallpapers
@@ -1016,6 +1126,301 @@ function WallpaperDownloads({ onClose }) {
             </article>
           ))}
         </div>
+      </section>
+    </div>
+  );
+}
+
+function ConflictComparison({ set, conflicts, onClose }) {
+  const timeScopeSets = conflicts.length ? conflicts.map((conflict) => conflict.set) : [set];
+  const scopedTimeMin = Math.min(...timeScopeSets.map((conflictSet) => conflictSet.timeMinutes));
+  const scopedTimeMax = Math.max(...timeScopeSets.map((conflictSet) => conflictSet.endTimeMinutes));
+  const conflictGenreOptions = [...new Set(conflicts.map((conflict) => conflict.set.genre))].sort(
+    (left, right) => left.localeCompare(right, undefined, { sensitivity: "base" })
+  );
+  const [conflictQuery, setConflictQuery] = useState("");
+  const [conflictGenres, setConflictGenres] = useState([]);
+  const [conflictGenreSearch, setConflictGenreSearch] = useState("");
+  const [conflictTimeMin, setConflictTimeMin] = useState(scopedTimeMin);
+  const [conflictTimeMax, setConflictTimeMax] = useState(scopedTimeMax);
+  const [conflictTimeMinText, setConflictTimeMinText] = useState(timeFromMinutes(scopedTimeMin));
+  const [conflictTimeMaxText, setConflictTimeMaxText] = useState(timeFromMinutes(scopedTimeMax));
+  const [openConflictFilter, setOpenConflictFilter] = useState("");
+  const conflictModalRef = useRef(null);
+  const scopedTimeSpan = Math.max(1, scopedTimeMax - scopedTimeMin);
+  const normalizedConflictQuery = normalizeText(conflictQuery.trim());
+  const activeConflictGenres = new Set(conflictGenres);
+  const hasActiveConflictFilters =
+    Boolean(normalizedConflictQuery) ||
+    Boolean(conflictGenres.length) ||
+    conflictTimeMin !== scopedTimeMin ||
+    conflictTimeMax !== scopedTimeMax;
+  const filteredConflicts = conflicts.filter((conflict) => {
+    const matchesQuery =
+      !normalizedConflictQuery ||
+      normalizeText(
+        `${conflict.set.artist} ${conflict.set.stage} ${conflict.set.genre} ${conflict.set.displayTime} ${conflict.set.displayRange}`
+      ).includes(normalizedConflictQuery);
+    const matchesGenre =
+      !activeConflictGenres.size || activeConflictGenres.has(conflict.set.genre);
+    const matchesTime =
+      conflict.set.endTimeMinutes > conflictTimeMin &&
+      conflict.set.timeMinutes < conflictTimeMax;
+
+    return matchesQuery && matchesGenre && matchesTime;
+  });
+  const conflictLabel = `${conflicts.length} Conflict${conflicts.length === 1 ? "" : "s"} On ${set.day}`;
+  const comparisonRows = [
+    { set, isSelected: true },
+    ...filteredConflicts.map((conflict) => ({
+      set: conflict.set,
+      isSelected: false,
+    })),
+  ];
+  const filteredConflictLabel = hasActiveConflictFilters
+    ? `${filteredConflicts.length} of ${conflicts.length} shown`
+    : `${conflicts.length} shown`;
+  const conflictTimeFullRange =
+    conflictTimeMin === scopedTimeMin && conflictTimeMax === scopedTimeMax;
+  const conflictTimeButtonLabel = conflictTimeFullRange
+    ? "Set Start Times"
+    : `${timeFromMinutes(conflictTimeMin)} - ${timeFromMinutes(conflictTimeMax)}`;
+
+  const applyTypedConflictTime = (value, boundary) => {
+    const parsed = parseTimeInput(value);
+
+    if (parsed === null) {
+      setConflictTimeMinText(timeFromMinutes(conflictTimeMin));
+      setConflictTimeMaxText(timeFromMinutes(conflictTimeMax));
+      return;
+    }
+
+    const nextValue = Math.max(scopedTimeMin, Math.min(scopedTimeMax, parsed));
+
+    if (boundary === "min") {
+      const nextMin = Math.min(nextValue, conflictTimeMax);
+      setConflictTimeMin(nextMin);
+      setConflictTimeMinText(timeFromMinutes(nextMin));
+    } else {
+      const nextMax = Math.max(nextValue, conflictTimeMin);
+      setConflictTimeMax(nextMax);
+      setConflictTimeMaxText(timeFromMinutes(nextMax));
+    }
+  };
+
+  const updateConflictTimeMin = (value) => {
+    const nextMin = Math.min(Number(value), conflictTimeMax);
+    setConflictTimeMin(nextMin);
+    setConflictTimeMinText(timeFromMinutes(nextMin));
+  };
+
+  const updateConflictTimeMax = (value) => {
+    const nextMax = Math.max(Number(value), conflictTimeMin);
+    setConflictTimeMax(nextMax);
+    setConflictTimeMaxText(timeFromMinutes(nextMax));
+  };
+
+  const resetConflictTimes = () => {
+    setConflictTimeMin(scopedTimeMin);
+    setConflictTimeMax(scopedTimeMax);
+    setConflictTimeMinText(timeFromMinutes(scopedTimeMin));
+    setConflictTimeMaxText(timeFromMinutes(scopedTimeMax));
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        if (openConflictFilter) {
+          setOpenConflictFilter("");
+        } else {
+          onClose();
+        }
+      }
+    };
+    const handlePointerDown = (event) => {
+      if (conflictModalRef.current && !conflictModalRef.current.contains(event.target)) {
+        return;
+      }
+
+      if (!event.target.closest(".dropdown-filter")) {
+        setOpenConflictFilter("");
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", handlePointerDown, true);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+    };
+  }, [onClose, openConflictFilter]);
+
+  return (
+    <div
+      className="conflict-modal-backdrop"
+      role="presentation"
+      onPointerDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <section
+        className="conflict-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="conflict-title"
+        ref={conflictModalRef}
+      >
+        <div className="conflict-panel-head">
+          <div>
+            <h2 id="conflict-title">Conflict Analysis</h2>
+            <p className="conflict-subtitle">
+              <span>{set ? conflictLabel : "No matching sets"}</span>
+              {set ? <span>({filteredConflictLabel})</span> : null}
+            </p>
+          </div>
+          <button
+            className="conflict-close"
+            type="button"
+            aria-label="Close conflict analysis"
+            onClick={onClose}
+          >
+            ×
+          </button>
+        </div>
+
+        {set ? (
+          <>
+            <div className="conflict-filter-bar">
+              <input
+                className="conflict-search"
+                type="search"
+                value={conflictQuery}
+                placeholder="Search conflicts"
+                autoComplete="off"
+                onChange={(event) => setConflictQuery(event.target.value)}
+              />
+              <MultiSelectFilter
+                id="conflict-genre"
+                label="genres"
+                options={conflictGenreOptions}
+                values={conflictGenres}
+                searchValue={conflictGenreSearch}
+                open={openConflictFilter === "genre"}
+                onOpenChange={(open) => setOpenConflictFilter(open ? "genre" : "")}
+                onSearchChange={setConflictGenreSearch}
+                onValuesChange={setConflictGenres}
+              />
+            </div>
+
+            <div className="dropdown-filter conflict-time-filter">
+              <button
+                className={`control-button ${openConflictFilter === "time" ? "is-open" : ""}`}
+                type="button"
+                aria-expanded={openConflictFilter === "time"}
+                aria-controls="conflict-time-filter-panel"
+                onClick={() =>
+                  setOpenConflictFilter((openFilter) =>
+                    openFilter === "time" ? "" : "time"
+                  )
+                }
+              >
+                <span>{conflictTimeButtonLabel}</span>
+                <span className="dropdown-caret">
+                  {openConflictFilter === "time" ? "⌃" : "⌄"}
+                </span>
+              </button>
+
+              {openConflictFilter === "time" ? (
+                <div className="dropdown-panel conflict-time-panel" id="conflict-time-filter-panel">
+                  <p className="time-subtitle">Start time range</p>
+                  <div className="time-input-grid">
+                    <label>
+                      <span>From</span>
+                      <input
+                        type="text"
+                        value={conflictTimeMinText}
+                        onChange={(event) => setConflictTimeMinText(event.target.value)}
+                        onBlur={() => applyTypedConflictTime(conflictTimeMinText, "min")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            applyTypedConflictTime(conflictTimeMinText, "min");
+                            event.currentTarget.blur();
+                          }
+                        }}
+                      />
+                    </label>
+                    <label>
+                      <span>To</span>
+                      <input
+                        type="text"
+                        value={conflictTimeMaxText}
+                        onChange={(event) => setConflictTimeMaxText(event.target.value)}
+                        onBlur={() => applyTypedConflictTime(conflictTimeMaxText, "max")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            applyTypedConflictTime(conflictTimeMaxText, "max");
+                            event.currentTarget.blur();
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="range-control conflict-range-control">
+                    <div className="range-track" />
+                    <div
+                      className="range-fill"
+                      style={{
+                        left: `${((conflictTimeMin - scopedTimeMin) / scopedTimeSpan) * 100}%`,
+                        right: `${100 - ((conflictTimeMax - scopedTimeMin) / scopedTimeSpan) * 100}%`,
+                      }}
+                    />
+                    <input
+                      className="range-input"
+                      type="range"
+                      min={scopedTimeMin}
+                      max={scopedTimeMax}
+                      value={conflictTimeMin}
+                      onChange={(event) => updateConflictTimeMin(event.target.value)}
+                    />
+                    <input
+                      className="range-input"
+                      type="range"
+                      min={scopedTimeMin}
+                      max={scopedTimeMax}
+                      value={conflictTimeMax}
+                      onChange={(event) => updateConflictTimeMax(event.target.value)}
+                    />
+                  </div>
+
+                  <button className="text-button conflict-reset-times" type="button" onClick={resetConflictTimes}>
+                    Reset times
+                  </button>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="comparison-list">
+              {comparisonRows.map((row) => (
+                <article
+                  className={`comparison-row ${row.isSelected ? "is-selected" : ""}`}
+                  key={row.set.id}
+                >
+                  <span className="comparison-artist">{row.set.artist}</span>
+                  <span className="comparison-stage">{row.set.stage}</span>
+                  <span className="comparison-time">{row.set.displayRange}</span>
+                </article>
+              ))}
+              {filteredConflicts.length ? null : (
+                <div className="empty-conflict">No conflicts match that filter.</div>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="empty-conflict">No sets match those filters.</div>
+        )}
       </section>
     </div>
   );
@@ -1280,7 +1685,7 @@ function useMediaQuery(query) {
   return matches;
 }
 
-function ScheduleTable({ sets: visibleSets }) {
+function ScheduleTable({ sets: visibleSets, comparisonSetId, conflictIndex, onCompareSet }) {
   const [columnWidths, setColumnWidths] = useState(() =>
     Object.fromEntries(columnConfig.map((column) => [column.key, column.defaultWidth]))
   );
@@ -1379,26 +1784,48 @@ function ScheduleTable({ sets: visibleSets }) {
         </thead>
         <tbody>
           {visibleSets.length ? (
-            visibleSets.map((set) => (
-              <tr key={`${set.day}-${set.stage}-${set.time}-${set.artist}`}>
-                <td className="day-cell">
-                  <span className={`day-badge ${dayClassNames[set.day] ?? ""}`}>
-                    {dayLabels[set.day] ?? set.day}
-                  </span>
-                </td>
-                <td className="time-cell">{set.displayTime}</td>
-                <td className="stage-cell">{set.stage}</td>
-                <td className="artist-cell">{set.artist}</td>
-                <td>
-                  <span className={`genre-badge ${genreClassNames[set.genre] ?? "genre-other"}`}>
-                    {set.genre}
-                  </span>
-                </td>
-              </tr>
-            ))
+            visibleSets.map((set) => {
+              const conflicts = conflictIndex.get(set.id) ?? [];
+              const isCompared = comparisonSetId === set.id;
+
+              return (
+                <tr
+                  className={isCompared ? "is-compared-row" : ""}
+                  key={`${set.day}-${set.stage}-${set.time}-${set.artist}`}
+                >
+                  <td className="day-cell">
+                    <span className={`day-badge ${dayClassNames[set.day] ?? ""}`}>
+                      {dayLabels[set.day] ?? set.day}
+                    </span>
+                  </td>
+                  <td className="time-cell">{set.displayTime}</td>
+                  <td className="stage-cell">{set.stage}</td>
+                  <td className="artist-cell">{set.artist}</td>
+                  <td>
+                    <span className={`genre-badge ${genreClassNames[set.genre] ?? "genre-other"}`}>
+                      {set.genre}
+                    </span>
+                  </td>
+                  <td className="conflict-cell">
+                    {conflicts.length ? (
+                      <button
+                        className={`conflict-button ${isCompared ? "is-active" : ""}`}
+                        type="button"
+                        aria-label={`${isCompared ? "Close" : "Compare"} ${set.artist} conflicts`}
+                        onClick={() => onCompareSet(set.id)}
+                      >
+                        {conflicts.length}
+                      </button>
+                    ) : (
+                      <span className="clear-conflict">Clear</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })
           ) : (
             <tr>
-              <td className="empty-row" colSpan="5">
+              <td className="empty-row" colSpan={columnConfig.length}>
                 No sets match those filters.
               </td>
             </tr>
