@@ -1351,12 +1351,12 @@ td:has(.genre-badge) {
     width: 100%;
     min-width: 0;
     table-layout: fixed;
-    font-size: 10px;
-    line-height: 1.14;
+    font-size: 9.35px;
+    line-height: 1.1;
   }
 
   col.col-day {
-    width: 10% !important;
+    width: 9% !important;
   }
 
   col.col-time {
@@ -1368,15 +1368,15 @@ td:has(.genre-badge) {
   }
 
   col.col-artist {
-    width: 27% !important;
+    width: 28% !important;
   }
 
   col.col-genre {
-    width: 15% !important;
+    width: 16% !important;
   }
 
   col.col-conflicts {
-    width: 14% !important;
+    width: 13% !important;
   }
 
   thead th {
@@ -1400,23 +1400,23 @@ td:has(.genre-badge) {
   }
 
   .col-day {
-    width: 14%;
+    width: 9%;
   }
 
   .col-time {
-    width: 20%;
+    width: 16%;
   }
 
   .col-stage {
-    width: 21%;
+    width: 18%;
   }
 
   .col-artist {
-    width: 27%;
+    width: 28%;
   }
 
   .col-genre {
-    width: 18%;
+    width: 16%;
   }
 
   .day-badge,
@@ -1427,21 +1427,22 @@ td:has(.genre-badge) {
     background: transparent;
     font-size: inherit;
     line-height: inherit;
-    white-space: normal;
+    white-space: nowrap;
   }
 
   .day-cell,
   .col-time,
   .time-cell,
+  td:has(.genre-badge),
   .conflict-cell {
     white-space: nowrap;
   }
 
   .conflict-button {
-    width: 100%;
-    min-height: 23px;
-    padding: 0 3px;
-    font-size: 10px;
+    width: min(42px, 100%);
+    min-height: 20px;
+    padding: 0 2px;
+    font-size: 9px;
   }
 
   .clear-conflict {
