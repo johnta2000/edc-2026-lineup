@@ -60,7 +60,6 @@ const GENRE_BY_ARTIST = {
   "Darren Porter": "Trance",
   Darude: "Trance",
   "Dead X": "Hardstyle",
-  "Deathpact ∞ Deathpact": "Dubstep",
   "Delta Heavy": "DNB",
   Discip: "Tech House",
   "DJ Gigola": "Techno",

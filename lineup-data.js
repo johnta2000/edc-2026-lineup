@@ -13,7 +13,16 @@ const EDC_LINEUP_DATA = {
     "Wasteland",
     "Quantum Valley",
     "Stereo Bloom",
-    "Bionic Jungle"
+    "Bionic Jungle",
+    "YeeDC!",
+    "CASA BACARDÍ at Daisy Fields",
+    "Electrolit Hydration House",
+    "Takis Zone",
+    "Forest House",
+    "Picnic Playtime Art Car",
+    "BeatBox Art Car",
+    "Insomniac Fridays",
+    "Ubuntu"
   ],
   "schedule": [
     {
@@ -200,7 +209,7 @@ const EDC_LINEUP_DATA = {
     },
     {
       "day": "Friday",
-      "time": "21:30",
+      "time": "22:30",
       "artist": "GorillaT",
       "stage": "Basspod",
       "notes": ""
@@ -229,6 +238,13 @@ const EDC_LINEUP_DATA = {
     {
       "day": "Friday",
       "time": "22:00",
+      "artist": "CC Love",
+      "stage": "CASA BACARDÍ at Daisy Fields",
+      "notes": ""
+    },
+    {
+      "day": "Friday",
+      "time": "22:00",
       "artist": "I Hate Models",
       "stage": "Circuit Grounds",
       "notes": ""
@@ -249,6 +265,27 @@ const EDC_LINEUP_DATA = {
     },
     {
       "day": "Friday",
+      "time": "22:00",
+      "artist": "Kelland",
+      "stage": "Electrolit Hydration House",
+      "notes": ""
+    },
+    {
+      "day": "Friday",
+      "time": "22:00",
+      "artist": "Machete",
+      "stage": "Takis Zone",
+      "notes": ""
+    },
+    {
+      "day": "Friday",
+      "time": "22:00",
+      "artist": "Max Low",
+      "stage": "Forest House",
+      "notes": ""
+    },
+    {
+      "day": "Friday",
       "time": "22:07",
       "artist": "Chris Lorenzo",
       "stage": "Kinetic Field",
@@ -264,15 +301,15 @@ const EDC_LINEUP_DATA = {
     {
       "day": "Friday",
       "time": "22:30",
-      "artist": "Ghengar",
-      "stage": "Basspod",
+      "artist": "Adrián Mills",
+      "stage": "Wasteland",
       "notes": ""
     },
     {
       "day": "Friday",
-      "time": "22:30",
-      "artist": "Adrián Mills",
-      "stage": "Wasteland",
+      "time": "22:15",
+      "artist": "Dirty Audio",
+      "stage": "YeeDC!",
       "notes": ""
     },
     {
@@ -291,6 +328,20 @@ const EDC_LINEUP_DATA = {
     },
     {
       "day": "Friday",
+      "time": "22:45",
+      "artist": "SKIBKID",
+      "stage": "Picnic Playtime Art Car",
+      "notes": ""
+    },
+    {
+      "day": "Friday",
+      "time": "22:45",
+      "artist": "Tsu Nami presents Club T...",
+      "stage": "BeatBox Art Car",
+      "notes": "artist name appears truncated in screenshot"
+    },
+    {
+      "day": "Friday",
       "time": "23:10",
       "artist": "Underworld",
       "stage": "Cosmic Meadow",
@@ -305,6 +356,20 @@ const EDC_LINEUP_DATA = {
     },
     {
       "day": "Friday",
+      "time": "23:00",
+      "artist": "Joey G",
+      "stage": "Forest House",
+      "notes": ""
+    },
+    {
+      "day": "Friday",
+      "time": "23:00",
+      "artist": "R.A.W.",
+      "stage": "Insomniac Fridays",
+      "notes": ""
+    },
+    {
+      "day": "Friday",
       "time": "23:19",
       "artist": "Sofi Tukker",
       "stage": "Kinetic Field",
@@ -313,7 +378,28 @@ const EDC_LINEUP_DATA = {
     {
       "day": "Friday",
       "time": "23:30",
-      "artist": "Deathpact ∞ Deathpact",
+      "artist": "Caiiro",
+      "stage": "Ubuntu",
+      "notes": ""
+    },
+    {
+      "day": "Friday",
+      "time": "23:30",
+      "artist": "Cloudy",
+      "stage": "Wasteland",
+      "notes": ""
+    },
+    {
+      "day": "Friday",
+      "time": "23:30",
+      "artist": "Danny The Wildchild",
+      "stage": "Takis Zone",
+      "notes": ""
+    },
+    {
+      "day": "Friday",
+      "time": "23:30",
+      "artist": "Ghengar",
       "stage": "Basspod",
       "notes": ""
     },
@@ -334,15 +420,50 @@ const EDC_LINEUP_DATA = {
     {
       "day": "Friday",
       "time": "23:30",
-      "artist": "Cloudy",
-      "stage": "Wasteland",
+      "artist": "JFUSE",
+      "stage": "CASA BACARDÍ at Daisy Fields",
       "notes": ""
+    },
+    {
+      "day": "Friday",
+      "time": "23:30",
+      "artist": "Juliet Mendoza",
+      "stage": "Electrolit Hydration House",
+      "notes": ""
+    },
+    {
+      "day": "Friday",
+      "time": "00:00",
+      "artist": "99jakes",
+      "stage": "Picnic Playtime Art Car",
+      "notes": ""
+    },
+    {
+      "day": "Friday",
+      "time": "00:00",
+      "artist": "ARMNHMR presents Pass...",
+      "stage": "BeatBox Art Car",
+      "notes": "artist name appears truncated in screenshot"
     },
     {
       "day": "Friday",
       "time": "00:00",
       "artist": "Cosmic Gate",
       "stage": "Quantum Valley",
+      "notes": ""
+    },
+    {
+      "day": "Friday",
+      "time": "00:00",
+      "artist": "Grant Fisher",
+      "stage": "YeeDC!",
+      "notes": ""
+    },
+    {
+      "day": "Friday",
+      "time": "00:00",
+      "artist": "Taylor Kade",
+      "stage": "Forest House",
       "notes": ""
     },
     {
@@ -1814,7 +1935,6 @@ const EDC_LINEUP_DATA = {
       "Underworld",
       "Levity",
       "Sofi Tukker",
-      "Deathpact ∞ Deathpact",
       "Peggy Gou",
       "Luke Dean",
       "Cloudy"
@@ -2107,7 +2227,6 @@ const EDC_LINEUP_DATA = {
       "MUZZ",
       "GorillaT",
       "Ghengar",
-      "Deathpact ∞ Deathpact",
       "Getter",
       "Eptic B2B Space Laces",
       "Doctor P B2B Flux Pavilion B2B FuntCase",
